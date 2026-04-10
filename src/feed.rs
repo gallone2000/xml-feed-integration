@@ -1,25 +1,30 @@
 use feed_rs::parser;
 use std::env;
 
+const PAGE_SIZE: usize = 50;
+
 pub fn fetch_and_print() {
     dotenvy::dotenv().ok();
-    let start_url = env::var("FEED_URL").expect("FEED_URL non trovata nel file .env");
+    let base_url = env::var("FEED_URL").expect("FEED_URL non trovata nel file .env");
 
-    let mut current_url = start_url;
+    let mut start_index = 1;
     let mut total = 0;
     let mut page = 1;
 
     loop {
-        println!("--- Pagina {page} ({current_url}) ---");
+        let url = format!("{}&start-index={}&max-results={}", base_url, start_index, PAGE_SIZE);
+        println!("--- Pagina {page} (post {start_index}–{}) ---", start_index + PAGE_SIZE - 1);
 
-        let response = reqwest::blocking::get(&current_url)
+        let response = reqwest::blocking::get(&url)
             .expect("Errore nella richiesta HTTP")
             .bytes()
             .expect("Errore nella lettura della risposta");
 
         let feed = parser::parse(&response[..]).expect("Errore nel parsing del feed XML");
 
-        if feed.entries.is_empty() {
+        let count = feed.entries.len();
+
+        if count == 0 {
             println!("Nessun post trovato. Fine.");
             break;
         }
@@ -34,18 +39,13 @@ pub fn fetch_and_print() {
             total += 1;
         }
 
-        // Cerca il link alla pagina successiva (standard Atom: <link rel="next">)
-        let next = feed.links.iter().find(|l| l.rel.as_deref() == Some("next"));
-        match next {
-            Some(link) => {
-                current_url = link.href.clone();
-                page += 1;
-            }
-            None => {
-                println!("\nNessuna pagina successiva trovata. Fine.");
-                break;
-            }
+        // Se i risultati sono meno di PAGE_SIZE, siamo all'ultima pagina
+        if count < PAGE_SIZE {
+            break;
         }
+
+        start_index += PAGE_SIZE;
+        page += 1;
     }
 
     println!("\nTotale post processati: {total}");
