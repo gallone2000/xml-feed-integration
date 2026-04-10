@@ -1,0 +1,14 @@
+# Rust
+/target/
+
+
+# Nix / direnv
+.direnv/
+.nix-gc-roots/
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
