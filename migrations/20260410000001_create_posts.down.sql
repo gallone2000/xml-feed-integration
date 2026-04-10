@@ -1,0 +1,2 @@
+DROP INDEX IF EXISTS idx_posts_url;
+DROP TABLE IF EXISTS posts;
