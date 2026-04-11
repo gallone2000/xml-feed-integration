@@ -95,6 +95,9 @@ fn html_to_text(html: &str) -> String {
     text.trim().to_string()
 }
 
+#[cfg(test)]
+mod tests;
+
 async fn fetch_post_details(url: String, client: reqwest::Client) -> PostDetails {
     let html = async { client.get(&url).send().await?.text().await }
         .await
