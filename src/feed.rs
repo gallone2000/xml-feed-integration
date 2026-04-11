@@ -95,15 +95,8 @@ fn html_to_text(html: &str) -> String {
     text.trim().to_string()
 }
 
-#[cfg(test)]
-mod tests;
-
-async fn fetch_post_details(url: String, client: reqwest::Client) -> PostDetails {
-    let html = async { client.get(&url).send().await?.text().await }
-        .await
-        .unwrap_or_default();
-
-    let document = Html::parse_document(&html);
+fn parse_post_details_from_html(html: &str) -> PostDetails {
+    let document = Html::parse_document(html);
 
     let title = Selector::parse(r#"meta[property="og:title"]"#)
         .ok()
@@ -129,6 +122,17 @@ async fn fetch_post_details(url: String, client: reqwest::Client) -> PostDetails
         img_url,
         body,
     }
+}
+
+#[cfg(test)]
+mod tests;
+
+async fn fetch_post_details(url: String, client: reqwest::Client) -> PostDetails {
+    let html = async { client.get(&url).send().await?.text().await }
+        .await
+        .unwrap_or_default();
+
+    parse_post_details_from_html(&html)
 }
 
 pub async fn fetch_and_print() {
